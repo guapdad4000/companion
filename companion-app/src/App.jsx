@@ -20,13 +20,6 @@ const MENU_ITEMS = [
   { id: 'system', label: 'TELEMETRY', desc: 'Hardware status' }
 ];
 
-const MOCK_TASKS = [
-  { id: 1, text: 'Review final merch samples', done: true },
-  { id: 2, text: 'Approve "Scamboy" Overcoat', done: false },
-  { id: 3, text: 'Upload raw stems to Drive', done: false },
-  { id: 4, text: 'Call with Royal Conch', done: false }
-];
-
 const MOCK_SCHEDULE = [
   { time: '08:00', title: 'Daily Sync', type: 'meeting' },
   { time: '10:30', title: 'Studio Session', type: 'creative' },
@@ -438,15 +431,15 @@ const ScheduleView = () => (
         <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
       </svg>
 
-      {MOCK_SCHEDULE.map((item, i) => (
+      {events.map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
           <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
-             {item.time} {i === 1 && <span className="w-1 h-1 bg-[#ff4500] rounded-full animate-pulse" />}
+             {item.created_at?.slice(11,16) || 'TBD'} {i === 1 && <span className="w-1 h-1 bg-[#ff4500] rounded-full animate-pulse" />}
           </div>
           <div className="bg-white border-2 border-black rounded-lg p-2.5 shadow-[3px_3px_0_0_rgba(0,0,0,0.2)] group-hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-shadow">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.title}</div>
-            <div className="text-[7px] uppercase mt-1 opacity-60 font-bold text-black/60">// {item.type}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.title || 'Event'}</div>
+            <div className="text-[7px] uppercase mt-1 opacity-60 font-bold text-black/60">// {item.category || item.section || 'event'}</div>
           </div>
         </motion.div>
       ))}
@@ -481,7 +474,7 @@ const TasksView = () => {
     setTasks(tasks.map(t => t.id === id ? { ...t, done: newDone } : t));
   };
 
-  const completed = tasks.filter(t => t.done).length;
+  const completed = tasks.filter(t => t.status !== 'completed').length;
   const progress = Math.round((completed / tasks.length) * 100);
 
   if (false) {
@@ -550,10 +543,10 @@ const CortexView = () => (
     </motion.div>
 
     <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
-      {MOCK_CORTEX.map((item, i) => (
+      {cortexData.map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
-          <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.time}</div>
-          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.text}</div>
+          <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
+          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.content?.slice(0,80) || item.title || ''}</div>
         </motion.div>
       ))}
     </div>
