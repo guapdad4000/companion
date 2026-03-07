@@ -306,7 +306,7 @@ const InputsView = () => {
           </div>
         )}
         <div className="flex gap-1.5">
-          {['VOICE', 'cam', 'txt'].map(t => (
+          {['voice', 'cam', 'txt'].map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
@@ -320,7 +320,7 @@ const InputsView = () => {
       
       <div className="flex-1 relative z-10 overflow-hidden pb-4">
         <AnimatePresence mode="wait">
-          {activeTab === 'VOICE' && (
+          {activeTab === 'voice' && (
             <motion.div key="txt" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
               <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
                 <CheckSquare size={10} /> Append Data Node
@@ -342,7 +342,7 @@ const InputsView = () => {
         }} className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95" disabled={saving}>{saving ? 'Saving...' : 'Commit Entry'}</button>
             </motion.div>
           )}
-          {activeTab === 'VOICE' && (
+          {activeTab === 'voice' && (
             <motion.div key="VOICE" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center gap-4 bg-white border-2 border-black rounded-xl p-4">
               {!audioBlob ? (
                 <>
