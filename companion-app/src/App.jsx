@@ -431,7 +431,7 @@ const ScheduleView = () => (
         <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
       </svg>
 
-      {events.map((item, i) => (
+      {(events || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
           <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
@@ -482,10 +482,10 @@ const TasksView = () => {
   }
   
   return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-12 overflow-hidden screen-phosphor">
+    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-6 overflow-hidden screen-phosphor">
       <div className="absolute inset-0 bg-tech-grid opacity-10 pointer-events-none invert" />
       
-      <motion.div variants={itemVars} className="border-2 border-white/20 p-2 mb-4 relative z-10 bg-[#00ff41]/5 backdrop-blur-sm flex flex-col gap-2">
+      <motion.div variants={itemVars} className="border border-white/10 p-1 mb-2 relative z-10 bg-[#00ff41]/5 flex gap-1">
         <div className="flex justify-between items-center">
           <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#00ff41] flex items-center gap-2">
              <Terminal size={10} /> SYS_TASKS
@@ -526,14 +526,14 @@ const TasksView = () => {
 };
 
 const CortexView = () => (
-  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-12 overflow-hidden">
+  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-6 overflow-hidden">
     {/* Animated background rings */}
     <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-40 h-40 border-2 border-dashed border-black/20 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none" />
     <motion.div initial={{ rotate: 360 }} animate={{ rotate: 0 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-56 h-56 border-4 border-black/10 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none flex items-center justify-center">
        <div className="w-1 h-full bg-black/10" />
     </motion.div>
     
-    <motion.div variants={itemVars} className="flex justify-between items-end border-b-4 border-black pb-2 mb-4 relative z-10">
+    <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-1 mb-2 relative z-10">
       <h2 className="text-[14px] font-bold uppercase tracking-tighter flex items-center gap-1">
         <Brain size={16} className="text-black fill-black" /> CORTEX_MEM
       </h2>
@@ -543,7 +543,7 @@ const CortexView = () => (
     </motion.div>
 
     <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
-      {cortexData.map((item, i) => (
+      {(cortexData || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
           <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
           <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.displayText}</div>
@@ -554,7 +554,7 @@ const CortexView = () => (
 );
 
 const SystemView = () => (
-  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-space-mono text-[#00ff41] relative z-10 pt-12 overflow-hidden screen-phosphor">
+  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-space-mono text-[#00ff41] relative z-10 pt-6 overflow-hidden screen-phosphor">
     <motion.div variants={itemVars} className="flex justify-between items-center border-b border-[#00ff41]/50 pb-2 mb-4 relative z-10">
       <span className="text-[10px] font-bold tracking-widest flex items-center gap-2">
         <Cpu size={12} /> TELEMETRY_DUMP
