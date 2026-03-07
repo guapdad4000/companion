@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckSquare, Mic, Camera, Calendar, Brain, Terminal, Cpu, Wifi, Zap } from 'lucide-react';
 
+
+const SUPABASE_URL = 'https://pvavybczlrhwagasriwu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2YXZ5YmN6bHJod2FnYXNyaXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyMzUyMzIsImV4cCI6MjA3MDgxMTIzMn0.Y0vL36TCuE8QYFpEbVBKzLYazowtYneUpOkSTk3RkZg';
 const MENU_ITEMS = [
   { id: 'inputs', label: 'SYS_INPUTS', desc: 'Capture data' },
   { id: 'schedule', label: 'TIMELINE', desc: 'Schedule' },
@@ -31,9 +34,9 @@ function InputsView() {
     if (!text.trim()) return;
     setSending(true);
     try {
-      await fetch('/api/cortex', {
+      await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
         body: JSON.stringify({ title: text.slice(0,50), content: text, section: 'all_spark', category: 'idea' })
       });
       setText('');
@@ -66,7 +69,7 @@ function InputsView() {
 
 function ScheduleView() {
   const [events,setEvents]=useState([]);
-  useEffect(()=>{fetch('/api/streams/upcoming').then(r=>r.json()).then(d=>setEvents(d.streams||[])).catch(()=>{});},[]);
+  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?section=eq.streams&limit=10').then(r=>r.json()).then(d=>setEvents(d.streams||[])).catch(()=>{});},[]);
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-mono text-black pt-12">
       <motion.div variants={itemVars} className="flex justify-between border-b-2 border-black pb-2 mb-4"><h2 className="text-[12px] font-bold uppercase"><Calendar size={14}/> TIMELINE</h2><span className="text-[8px] bg-black text-white px-2 py-0.5 rounded">MAR_07</span></motion.div>
@@ -85,8 +88,8 @@ function ScheduleView() {
 
 function TasksView() {
   const [tasks,setTasks]=useState([]);
-  useEffect(()=>{fetch('/api/tasks').then(r=>r.json()).then(d=>setTasks(d.tasks||[])).catch(()=>{});},[]);
-  const toggle = async(id,done)=>{await fetch(`/api/tasks/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({completed:!done})});setTasks(tasks.map(t=>t.id===id?{...t,completed:!done}:t));};
+  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_tasks').then(r=>r.json()).then(d=>setTasks(d.tasks||[])).catch(()=>{});},[]);
+  const toggle = async(id,done)=>{await fetch(SUPABASE_URL + '/rest/v1/lifeos_tasks?id=eq.' + id,{method:'PATCH', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },body:JSON.stringify({completed:!done})});setTasks(tasks.map(t=>t.id===id?{...t,completed:!done}:t));};
   const done=tasks.filter(t=>t.completed).length;
   const pct=tasks.length?Math.round(done/tasks.length*100):0;
   return (
@@ -109,7 +112,7 @@ function TasksView() {
 
 function CortexView() {
   const [items,setItems]=useState([]);
-  useEffect(()=>{fetch('/api/cortex').then(r=>r.json()).then(d=>setItems(d.entries?.slice(0,10)||[])).catch(()=>{});},[]);
+  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex').then(r=>r.json()).then(d=>setItems(d.entries?.slice(0,10)||[])).catch(()=>{});},[]);
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-mono text-black pt-12">
       <motion.div variants={itemVars} className="flex justify-between border-b-4 border-black pb-2 mb-4"><h2 className="text-[14px] font-bold uppercase"><Brain/> CORTEX</h2><span className="text-[8px] bg-black text-[#ff4500] px-2 py-0.5">SYNCED</span></motion.div>
