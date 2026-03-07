@@ -438,7 +438,7 @@ const ScheduleView = () => (
              {item.created_at?.slice(11,16) || 'TBD'} {i === 1 && <span className="w-1 h-1 bg-[#ff4500] rounded-full animate-pulse" />}
           </div>
           <div className="bg-white border-2 border-black rounded-lg p-2.5 shadow-[3px_3px_0_0_rgba(0,0,0,0.2)] group-hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-shadow">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.title || 'Event'}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.displayTitle}</div>
             <div className="text-[7px] uppercase mt-1 opacity-60 font-bold text-black/60">// {item.category || item.section || 'event'}</div>
           </div>
         </motion.div>
@@ -516,7 +516,7 @@ const TasksView = () => {
               </AnimatePresence>
             </div>
             <span className={`text-[9px] leading-snug tracking-wide transition-all ${task.done ? 'line-through opacity-50 text-[#00ff41]' : 'opacity-100'}`}>
-              {task.text}
+              {task.title}
             </span>
           </motion.div>
         ))}
@@ -546,7 +546,7 @@ const CortexView = () => (
       {cortexData.map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
           <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
-          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.content?.slice(0,80) || item.title || ''}</div>
+          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.displayText}</div>
         </motion.div>
       ))}
     </div>
