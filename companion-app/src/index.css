@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: transparent;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scanlines {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.15) 50%,
+    rgba(0, 0, 0, 0.15)
+  );
+  background-size: 100% 4px;
+}
+
+.bg-tech-grid {
+  background-image: linear-gradient(rgba(0, 0, 0, 1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 1) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+
+.screen-phosphor {
+  text-shadow: 0 0 8px currentColor;
+}
