@@ -320,7 +320,7 @@ const InputsView = () => {
       
       <div className="flex-1 relative z-10 overflow-hidden pb-4">
         <AnimatePresence mode="wait">
-          {activeTab === 'voice' && (
+          {activeTab === 'txt' && (
             <motion.div key="txt" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
               <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
                 <CheckSquare size={10} /> Append Data Node
@@ -415,7 +415,20 @@ const InputsView = () => {
   );
 };
 
-const ScheduleView = () => (
+const ScheduleView = () => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?section=eq.streams&order=created_at.desc&limit=10', {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    }).then(r => r.json()).then(d => {
+      setEvents(d || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+  
+  return (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-12">
     <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
     <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4 relative z-10">
@@ -446,6 +459,7 @@ const ScheduleView = () => (
     </div>
   </motion.div>
 );
+}
 
 const TasksView = () => {
   const [tasks, setTasks] = useState([]);
@@ -525,7 +539,20 @@ const TasksView = () => {
   );
 };
 
-const CortexView = () => (
+const CortexView = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?order=created_at.desc&limit=20', {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    }).then(r => r.json()).then(d => {
+      setItems(d || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+  
+  return (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-6 overflow-hidden">
     {/* Animated background rings */}
     <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-40 h-40 border-2 border-dashed border-black/20 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none" />
@@ -552,6 +579,7 @@ const CortexView = () => (
     </div>
   </motion.div>
 );
+}
 
 const SystemView = () => (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-space-mono text-[#00ff41] relative z-10 pt-6 overflow-hidden screen-phosphor">
