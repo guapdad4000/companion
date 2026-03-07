@@ -138,7 +138,97 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
 // --- INTERNAL OS VIEWS ---
 
 const InputsView = () => {
+  const [activeTab, setActiveTab] = useState('txt');
   
+  // Mic states
+  const [recording, setRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  
+  // Camera states  
+  const [cameraActive, setCameraActive] = useState(false);
+  const [photoData, setPhotoData] = useState(null);
+  const [videoEl, setVideoEl] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  // Mic functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => { setAudioBlob(new Blob(chunks, { type: 'audio/webm' })); };
+      recorder.start();
+      setMediaRecorder(recorder);
+      setRecording(true);
+    } catch(e) { console.error(e); alert('Mic access denied'); }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t => t.stop()); }
+    setRecording(false);
+  };
+
+  const saveAudio = async () => {
+    if (!audioBlob) return;
+    setSaving(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result.split(',')[1];
+      try {
+        await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ title: '🎤 Voice ' + new Date().toLocaleString(), content: '[Voice note]', section: 'voice-notes', category: 'audio', metadata: { audio: base64 } })
+        });
+        setAudioBlob(null);
+        alert('Voice saved!');
+      } catch(e) { console.error(e); }
+      setSaving(false);
+    };
+    reader.readAsDataURL(audioBlob);
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoEl) videoEl.srcObject = stream;
+      setCameraActive(true);
+    } catch(e) { console.error(e); alert('Camera denied'); }
+  };
+
+  const stopCamera = () => {
+    if (videoEl && videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoEl) return;
+    const c = document.createElement('canvas');
+    c.width = videoEl.videoWidth; c.height = videoEl.videoHeight;
+    c.getContext('2d').drawImage(videoEl, 0, 0);
+    setPhotoData(c.toDataURL('image/jpeg', 0.8));
+    if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+    setCameraActive(false);
+  };
+
+  const savePhoto = async () => {
+    if (!photoData) return;
+    setSaving(true);
+    const base64 = photoData.split(',')[1];
+    try {
+      await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ title: '📷 Photo ' + new Date().toLocaleString(), content: '[Captured photo]', section: 'all_spark', category: 'visual', metadata: { image: base64 } })
+      });
+      setPhotoData(null);
+      alert('Photo saved!');
+    } catch(e) { console.error(e); }
+    setSaving(false);
+  };
 
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
