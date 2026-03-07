@@ -73,8 +73,8 @@ const MagneticInkBackground = () => {
     color: i % 3 === 0 ? '#000000' : i % 3 === 1 ? '#111111' : '#222222'
   })), []);
 
-  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -122,8 +122,8 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
   const rightClawRot = isTyping ? [35, 0, 35] : (isMoving ? [20, 0, 20] : 0);
   const animDuration = isTyping ? 0.1 : 0.3;
 
-  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -293,8 +293,8 @@ const InputsView = () => {
     setSaving(false);
   };
 
-  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -484,8 +484,8 @@ const TasksView = () => {
   const completed = tasks.filter(t => t.done).length;
   const progress = Math.round((completed / tasks.length) * 100);
 
-  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -610,6 +610,12 @@ const SystemView = () => (
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [started, setStarted] = useState(false);
+  
+  // Auto-start after 10 seconds no matter what
+  useEffect(() => {
+    const timer = setTimeout(() => setStarted(true), 10000);
+    return () => clearTimeout(timer);
+  }, []);
   const [currentView, setCurrentView] = useState('menu'); 
   const [time, setTime] = useState('12:00');
   const [date, setDate] = useState('MAR 07');
@@ -637,8 +643,8 @@ export default function App() {
     window.addEventListener('mousemove', handleMouseMove);
     document.body.addEventListener('mouseleave', handleMouseLeave);
     
-    if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+    if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return () => {
@@ -656,8 +662,8 @@ export default function App() {
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
-    if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+    if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return () => clearInterval(interval);
@@ -697,8 +703,8 @@ export default function App() {
       if (e.key === 'Escape' || e.key === 'ArrowLeft') goBack();
     };
     window.addEventListener('keydown', handleKeyDown);
-    if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+    if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return () => window.removeEventListener('keydown', handleKeyDown);
@@ -725,8 +731,8 @@ export default function App() {
       case 'system': return <SystemView />;
       default:
         // HOME MENU
-        if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+        if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -756,8 +762,8 @@ export default function App() {
                   const offset = Math.abs(activeIndex - i);
                   const curve = offset * offset * 5; // Creates the parabolic bulge
                   
-                  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+                  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
@@ -802,8 +808,8 @@ export default function App() {
     }
   };
 
-  if (!started) {
-    return <StartupScreen onComplete={() => setStarted(true)} />;
+  if (started === false) {
+    return <StartupScreen onComplete={() => { setStarted(true); }} />;
   }
   
   return (
