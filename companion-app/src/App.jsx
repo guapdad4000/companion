@@ -845,10 +845,10 @@ export default function App() {
         />
 
         {/* Top Right Metallic Loop */}
-        <div className="absolute top-[-15px] right-[25px] w-14 h-14 rounded-full border-[6px] border-[#8a8a93] bg-transparent shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_2px_4px_rgba(255,255,255,0.9)] z-0" style={{ transform: 'translateZ(-10px)' }} />
+        <div className="absolute top-[-15px] right-[25px] w-14 h-14 rounded-full border-[6px] device-handle bg-transparent shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_2px_4px_rgba(255,255,255,0.9)] z-0" style={{ transform: 'translateZ(-10px)' }} />
 
         {/* Main Body */}
-        <div className="absolute inset-0 bg-[#EFEFEA] rounded-[3.5rem] shadow-[inset_3px_6px_12px_rgba(255,255,255,1),inset_-6px_-8px_20px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.2)] border border-[#d1d1cc] overflow-hidden z-10 flex flex-col relative">
+        <div className="absolute inset-0 device-body rounded-[3.5rem] shadow-[inset_3px_6px_12px_rgba(255,255,255,1),inset_-6px_-8px_20px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.2)] border border-[#d1d1cc] overflow-hidden z-10 flex flex-col relative">
           
           {/* Top Edge Detail & DynaVOICE LED */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-[#ff4500] rounded-b-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]" />
@@ -868,7 +868,7 @@ export default function App() {
           </div>
 
           {/* THE SCREEN ASSEMBLY */}
-          <div className="w-[88%] mx-auto mt-12 h-[360px] bg-black rounded-[1.5rem] border-[10px] border-[#1a1a1a] shadow-[inset_0_5px_25px_rgba(0,0,0,1),0_8px_20px_rgba(0,0,0,0.15)] relative overflow-hidden flex flex-col">
+          <div className="w-[88%] mx-auto mt-12 h-[360px] device-screen-border rounded-[1.5rem] border-[10px] border-[#1a1a1a] shadow-[inset_0_5px_25px_rgba(0,0,0,1),0_8px_20px_rgba(0,0,0,0.15)] relative overflow-hidden flex flex-col">
             
             {/* Screen Inner Bezel Shadow */}
             <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] pointer-events-none z-40" />
@@ -933,7 +933,7 @@ export default function App() {
           {/* LOWER CONTROL PAD AREA */}
           <div className="flex-1 flex items-center justify-center relative perspective-1000 mt-2">
             {/* The Large Circular D-Pad Outer Ring */}
-            <div className="w-[230px] h-[230px] rounded-full bg-[#EFEFEA] shadow-[inset_0_8px_15px_rgba(255,255,255,1),inset_0_-8px_20px_rgba(0,0,0,0.1),0_12px_25px_rgba(0,0,0,0.2)] relative flex items-center justify-center border border-[#d1d1cc]">
+            <div className="w-[230px] h-[230px] rounded-full device-dpad shadow-[inset_0_8px_15px_rgba(255,255,255,1),inset_0_-8px_20px_rgba(0,0,0,0.1),0_12px_25px_rgba(0,0,0,0.2)] relative flex items-center justify-center border border-[#d1d1cc]">
               
               {/* The Inner Moving D-Pad */}
               <motion.div 
