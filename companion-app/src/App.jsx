@@ -138,7 +138,7 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
 // --- INTERNAL OS VIEWS ---
 
 const InputsView = () => {
-  const [activeTab, setActiveTab] = useState('txt');
+  
 
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
@@ -175,37 +175,70 @@ const InputsView = () => {
             </motion.div>
           )}
           {activeTab === 'mic' && (
-            <motion.div key="mic" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col items-center justify-center gap-6 bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]">
-              <div className="text-[8px] uppercase tracking-widest text-[#ff4500] font-bold flex items-center gap-1.5 animate-pulse">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ff4500]" /> Recording Active
-              </div>
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center relative cursor-pointer group shadow-lg">
-                <div className="absolute inset-0 rounded-full bg-[#ff4500]/30 scale-[1.3] animate-ping pointer-events-none" />
-                <Mic size={20} className="text-white group-hover:text-[#ff4500] transition-colors relative z-10" />
-              </div>
-              <div className="flex gap-1 h-8 items-center mt-2">
-                {[...Array(14)].map((_, i) => (
-                  <motion.div key={i} animate={{ height: [4, Math.random()*24+4, 4] }} transition={{ duration: 0.5, repeat: Infinity, delay: i*0.1 }} className="w-1.5 bg-black rounded-full" />
-                ))}
-              </div>
+            <motion.div key="mic" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center gap-4 bg-white border-2 border-black rounded-xl p-4">
+              {!audioBlob ? (
+                <>
+                  <div className="text-[8px] uppercase tracking-widest text-[#ff4500] font-bold flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${recording ? 'bg-[#ff4500] animate-pulse' : 'bg-black/30'}`} />
+                    {recording ? 'Recording...' : 'Ready to Record'}
+                  </div>
+                  <div onClick={recording ? stopRecording : startRecording} className="w-20 h-20 bg-black rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-transform shadow-lg">
+                    <div className={`absolute inset-0 rounded-full ${recording ? 'bg-red-500/30 scale-110 animate-ping' : ''}`} />
+                    <Mic size={28} className={`${recording ? 'text-red-500' : 'text-white'}`} />
+                  </div>
+                  <div className="flex gap-1 h-8 items-center">
+                    {[...Array(14)].map((_, i) => (
+                      <motion.div key={i} animate={{ height: recording ? [4, Math.random()*24+4, 4] : 4 }} transition={{ duration: 0.5, repeat: Infinity, delay: i*0.1 }} className={`w-1.5 rounded-full ${recording ? 'bg-black' : 'bg-black/30'}`} />
+                    ))}
+                  </div>
+                  <div className="text-[7px] text-black/50">{recording ? 'Tap to stop' : 'Tap to record'}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-[8px] uppercase tracking-widest text-green-600 font-bold">Recording Ready!</div>
+                  <audio src={URL.createObjectURL(audioBlob)} controls className="w-full h-10" />
+                  <div className="flex gap-2 w-full">
+                    <button onClick={() => setAudioBlob(null)} className="flex-1 py-2 bg-black/10 rounded text-[8px] font-bold">Discard</button>
+                    <button onClick={saveAudio} disabled={saving} className="flex-1 py-2 bg-[#ff4500] text-white rounded text-[8px] font-bold">{saving ? 'Saving...' : 'Save'}</button>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
           {activeTab === 'cam' && (
-            <motion.div key="cam" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
-              <div className="flex-1 bg-black rounded-xl relative overflow-hidden flex items-center justify-center border-2 border-black group shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]">
-                {/* Simulated Optical Feed */}
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 grayscale group-hover:grayscale-0 transition-all duration-500" />
-                <div className="absolute inset-0 bg-blue-500/10 mix-blend-color pointer-events-none" />
-                <Crosshair className="top-4 left-4 text-white" />
-                <Crosshair className="bottom-4 right-4 text-white" />
-                {/* Center Focus Reticle */}
-                <div className="w-12 h-12 border border-white/50 rounded-full flex items-center justify-center relative z-10">
-                  <div className="w-1 h-1 bg-[#ff4500] rounded-full" />
-                </div>
+            <motion.div key="cam" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col gap-3">
+              <div className="flex-1 bg-black rounded-xl relative overflow-hidden border-2 border-black">
+                {!photoData ? (
+                  <>
+                    <video ref={e => setVideoEl(e)} autoPlay playsInline className={`absolute inset-0 w-full h-full object-cover ${cameraActive ? '' : 'hidden'}`} />
+                    {!cameraActive && <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-white/50 text-[8px]">Camera off</div>
+                    </div>}
+                    <Crosshair className="top-4 left-4 text-white z-10" />
+                    <Crosshair className="bottom-4 right-4 text-white z-10" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border-2 border-white/50 rounded-full z-10" />
+                  </>
+                ) : (
+                  <img src={photoData} alt="Captured" className="absolute inset-0 w-full h-full object-cover" />
+                )}
               </div>
-              <button className="w-full bg-white border-2 border-black text-black py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] hover:text-white hover:border-[#ff4500] transition-colors flex items-center justify-center gap-2 active:scale-95 shadow-md">
-                <Camera size={12} /> Capture Visual
-              </button>
+              <div className="flex gap-2">
+                {!photoData ? (
+                  <>
+                    <button onClick={cameraActive ? stopCamera : startCamera} className="flex-1 py-2 bg-black text-white rounded text-[8px] font-bold">
+                      {cameraActive ? 'Stop Camera' : 'Start Camera'}
+                    </button>
+                    <button onClick={capturePhoto} disabled={!cameraActive} className="flex-1 py-2 bg-[#ff4500] text-white rounded text-[8px] font-bold disabled:opacity-50">
+                      <Camera size={10} className="inline mr-1" /> Capture
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => setPhotoData(null)} className="flex-1 py-2 bg-black/10 text-black rounded text-[8px] font-bold">Retake</button>
+                    <button onClick={savePhoto} disabled={saving} className="flex-1 py-2 bg-[#ff4500] text-white rounded text-[8px] font-bold">{saving ? 'Saving...' : 'Save Photo'}</button>
+                  </>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
