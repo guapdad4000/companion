@@ -420,7 +420,7 @@ const ScheduleView = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?section=eq.streams&order=created_at.desc&limit=10', {
+    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?order=created_at.desc&limit=20', {
       headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
     }).then(r => r.json()).then(d => {
       setEvents(d || []);
@@ -570,7 +570,7 @@ const CortexView = () => {
     </motion.div>
 
     <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
-      {(cortexData || []).map((item, i) => (
+      {(items || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
           <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
           <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.displayText}</div>
