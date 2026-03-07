@@ -154,7 +154,7 @@ const InputsView = () => {
     setStatus({ type, message });
     setTimeout(() => setStatus(null), 3000);
   };
-  const [activeTab, setActiveTab] = useState('txt');
+  const [activeTab, setActiveTab] = useState('VOICE');
   
   // Mic states
   const [recording, setRecording] = useState(false);
@@ -182,25 +182,56 @@ const InputsView = () => {
   };
 
   const stopRecording = () => {
-    if (mediaRecorder) { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t => t.stop()); }
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      // Tracks are stopped in onstop callback
+    }
     setRecording(false);
   };
 
   const saveAudio = async () => {
-    if (!audioBlob) return;
+    if (!audioBlob) {
+      showStatus('error', 'No recording to save');
+      return;
+    }
     setSaving(true);
+    showStatus('success', 'Saving...');
+    
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = reader.result.split(',')[1];
       try {
         const resAudio = await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ title: '🎤 Voice ' + new Date().toLocaleString(), content: '[Voice note]', section: 'voice-notes', category: 'audio', metadata: { audio: base64 } })
+          headers: { 
+            'Content-Type': 'application/json', 
+            'apikey': SUPABASE_KEY, 
+            'Authorization': 'Bearer ' + SUPABASE_KEY, 
+            'Prefer': 'return=minimal' 
+          },
+          body: JSON.stringify({ 
+            title: '🎤 Voice ' + new Date().toLocaleString(), 
+            content: '[Voice note - ' + Math.round(audioBlob.size/1024) + 'KB]', 
+            section: 'voice-notes', 
+            category: 'audio', 
+            metadata: { audio: base64, duration: 'unknown' } 
+          })
         });
-        setAudioBlob(null);
-        showStatus('success', 'Voice saved to Cortex!');
-      } catch(e) { console.error(e); }
+        
+        if (resAudio.ok) {
+          setAudioBlob(null);
+          showStatus('success', '✓ Voice saved to Cortex!');
+        } else {
+          showStatus('error', 'Failed to save - try again');
+        }
+      } catch(e) { 
+        console.error(e);
+        showStatus('error', 'Error saving voice');
+      }
+      setSaving(false);
+    };
+    reader.onerror = () => {
+      showStatus('error', 'Failed to process audio');
       setSaving(false);
     };
     reader.readAsDataURL(audioBlob);
@@ -221,13 +252,29 @@ const InputsView = () => {
   };
 
   const capturePhoto = () => {
-    if (!videoEl) return;
+    if (!videoEl || !cameraActive) return;
+    
+    // Ensure video has dimensions
+    if (videoEl.videoWidth === 0 || videoEl.videoHeight === 0) {
+      showStatus('error', 'Camera not ready - wait a moment');
+      return;
+    }
+    
     const c = document.createElement('canvas');
-    c.width = videoEl.videoWidth; c.height = videoEl.videoHeight;
+    c.width = videoEl.videoWidth;
+    c.height = videoEl.videoHeight;
     c.getContext('2d').drawImage(videoEl, 0, 0);
-    setPhotoData(c.toDataURL('image/jpeg', 0.8));
-    if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+    
+    // Compress for mobile
+    const dataUrl = c.toDataURL('image/jpeg', 0.7);
+    setPhotoData(dataUrl);
+    
+    // Stop camera
+    if (videoEl.srcObject) {
+      videoEl.srcObject.getTracks().forEach(t => t.stop());
+    }
     setCameraActive(false);
+    showStatus('success', 'Photo captured!');
   };
 
   const savePhoto = async () => {
@@ -266,7 +313,7 @@ const InputsView = () => {
           </div>
         )}
         <div className="flex gap-1.5">
-          {['txt', 'mic', 'cam'].map(t => (
+          {['VOICE', 'cam', 'txt'].map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
@@ -280,7 +327,7 @@ const InputsView = () => {
       
       <div className="flex-1 relative z-10 overflow-hidden pb-4">
         <AnimatePresence mode="wait">
-          {activeTab === 'txt' && (
+          {activeTab === 'VOICE' && (
             <motion.div key="txt" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
               <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
                 <CheckSquare size={10} /> Append Data Node
@@ -302,8 +349,8 @@ const InputsView = () => {
         }} className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95" disabled={saving}>{saving ? 'Saving...' : 'Commit Entry'}</button>
             </motion.div>
           )}
-          {activeTab === 'mic' && (
-            <motion.div key="mic" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center gap-4 bg-white border-2 border-black rounded-xl p-4">
+          {activeTab === 'VOICE' && (
+            <motion.div key="VOICE" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center gap-4 bg-white border-2 border-black rounded-xl p-4">
               {!audioBlob ? (
                 <>
                   <div className="text-[8px] uppercase tracking-widest text-[#ff4500] font-bold flex items-center gap-1.5">
@@ -657,7 +704,7 @@ export default function App() {
   return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView, activeIndex]);
 
-  // Dynamic LED Color based on View
+  // DynaVOICE LED Color based on View
   const ledColor = useMemo(() => {
     switch (currentView) {
       case 'inputs': return '#ff4500'; // Orange
@@ -795,7 +842,7 @@ export default function App() {
         style={{ transformStyle: 'preserve-3d' }}
       >
         
-        {/* Dynamic Drop Shadow (Reacts to tilt) */}
+        {/* DynaVOICE Drop Shadow (Reacts to tilt) */}
         <motion.div 
           className="absolute inset-0 bg-black/40 rounded-[3.5rem] blur-2xl -z-10"
           animate={{ x: -rotateY * 2, y: rotateX * 2 }}
@@ -807,7 +854,7 @@ export default function App() {
         {/* Main Body */}
         <div className="absolute inset-0 bg-[#EFEFEA] rounded-[3.5rem] shadow-[inset_3px_6px_12px_rgba(255,255,255,1),inset_-6px_-8px_20px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.2)] border border-[#d1d1cc] overflow-hidden z-10 flex flex-col relative">
           
-          {/* Top Edge Detail & Dynamic LED */}
+          {/* Top Edge Detail & DynaVOICE LED */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-[#ff4500] rounded-b-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]" />
           <div className="absolute top-5 left-6 flex items-center gap-2">
             <div 
