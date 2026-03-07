@@ -1,190 +1,721 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckSquare, Mic, Camera, Calendar, Brain, Terminal, Cpu, Wifi, Zap } from 'lucide-react';
-
+import { 
+  CheckSquare, Mic, Camera, MessageSquare, 
+  Calendar, Brain, ArrowLeft, Plus, MoreHorizontal,
+  BatteryMedium, Wifi, Zap, Activity, Folder, ChevronRight, Terminal,
+  Cpu, HardDrive
+} from 'lucide-react';
 
 const SUPABASE_URL = 'https://pvavybczlrhwagasriwu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2YXZ5YmN6bHJod2FnYXNyaXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyMzUyMzIsImV4cCI6MjA3MDgxMTIzMn0.Y0vL36TCuE8QYFpEbVBKzLYazowtYneUpOkSTk3RkZg';
+
+// --- DATA ---
 const MENU_ITEMS = [
-  { id: 'inputs', label: 'SYS_INPUTS', desc: 'Capture data' },
-  { id: 'schedule', label: 'TIMELINE', desc: 'Schedule' },
-  { id: 'tasks', label: 'EXECUTABLES', desc: 'Tasks' },
-  { id: 'cortex', label: 'CORTEX_LOG', desc: 'Memory' },
-  { id: 'system', label: 'TELEMETRY', desc: 'Status' }
+  { id: 'inputs', label: 'SYS_INPUTS', desc: 'Capture external data' },
+  { id: 'schedule', label: 'TIMELINE', desc: 'Temporal alignment' },
+  { id: 'tasks', label: 'EXECUTABLES', desc: 'Active directives' },
+  { id: 'cortex', label: 'CORTEX_LOG', desc: 'Neural memory bank' },
+  { id: 'system', label: 'TELEMETRY', desc: 'Hardware status' }
 ];
 
-const containerVars = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
-const itemVars = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400 } } };
+const MOCK_TASKS = [
+  { id: 1, text: 'Review final merch samples', done: true },
+  { id: 2, text: 'Approve "Scamboy" Overcoat', done: false },
+  { id: 3, text: 'Upload raw stems to Drive', done: false },
+  { id: 4, text: 'Call with Royal Conch', done: false }
+];
 
-const TacticalLobster = ({ className = '', isMoving = false }) => (
-  <svg viewBox="0 0 24 36" className={className} fill="none">
-    <motion.path d="M 6 12 C 0 8 0 0 6 4 C 12 6 8 12 8 14 Z" fill="currentColor" animate={{ rotate: isMoving ? [-20, 0, -20] : 0 }} transition={{ repeat: Infinity, duration: 0.3 }} style={{ originX: '8px', originY: '14px' }} />
-    <motion.path d="M 18 12 C 24 8 24 0 18 4 C 12 6 16 12 16 14 Z" fill="currentColor" animate={{ rotate: isMoving ? [20, 0, 20] : 0 }} transition={{ repeat: Infinity, duration: 0.3 }} style={{ originX: '16px', originY: '14px' }} />
-    <rect x="8" y="12" width="8" height="14" rx="3" fill="currentColor" />
-    <path d="M 8 25 L 5 32 L 12 30 L 19 32 L 16 25 Z" fill="currentColor" />
+const MOCK_SCHEDULE = [
+  { time: '08:00', title: 'Daily Sync', type: 'meeting' },
+  { time: '10:30', title: 'Studio Session', type: 'creative' },
+  { time: '14:00', title: 'Content Review', type: 'work' },
+  { time: '16:45', title: 'Release Call', type: 'meeting' }
+];
+
+const MOCK_CORTEX = [
+  { time: '10m ago', text: 'Voice note: Need more 808s on the drop.' },
+  { time: '2h ago', text: 'Idea: Modular physical cartridges for albums.' },
+  { time: '5h ago', text: 'Photo: Stage lighting reference saved.' }
+];
+
+// --- ANIMATION VARIANTS ---
+const containerVars = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+  }
+};
+
+const itemVars = {
+  hidden: { opacity: 0, y: 15, filter: 'blur(4px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 400, damping: 25 } }
+};
+
+// --- MICRO-COMPONENTS ---
+const Crosshair = ({ className = '' }) => (
+  <svg width="10" height="10" viewBox="0 0 10 10" className={`absolute text-black/30 pointer-events-none z-20 ${className}`} fill="none" stroke="currentColor" strokeWidth="1">
+    <path d="M5 0v10M0 5h10" />
   </svg>
 );
 
-function InputsView() {
-  const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [activeTab, setActiveTab] = useState('txt');
-
-  const handleSubmit = async () => {
-    if (!text.trim()) return;
-    setSending(true);
-    try {
-      await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-        body: JSON.stringify({ title: text.slice(0,50), content: text, section: 'all_spark', category: 'idea' })
-      });
-      setText('');
-      alert('Saved to Cortex!');
-    } catch(e) { console.error(e); }
-    setSending(false);
-  };
+const MagneticInkBackground = () => {
+  // Generate 25 distinct blobs to simulate liquid clumping and pulling apart
+  const blobs = useMemo(() => Array.from({ length: 25 }).map((_, i) => ({
+    id: i,
+    size: Math.random() * 70 + 40, // Random sizes between 40px and 110px
+    x: [Math.random() * 260 - 130, Math.random() * 260 - 130, Math.random() * 260 - 130],
+    y: [Math.random() * 340 - 170, Math.random() * 340 - 170, Math.random() * 340 - 170],
+    duration: Math.random() * 12 + 15,
+    delay: Math.random() * -20,
+    color: i % 3 === 0 ? '#000000' : i % 3 === 1 ? '#111111' : '#222222'
+  })), []);
 
   return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-mono text-black pt-10">
-      <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4">
-        <h2 className="text-[12px] font-bold uppercase flex items-center gap-2"><Zap size={14} className="text-[#ff4500]" /> SYS_IN</h2>
-        <div className="flex gap-1">
-          {['txt','mic','cam'].map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} className={`text-[8px] px-2 py-0.5 rounded font-bold uppercase ${activeTab===t ? 'bg-black text-white' : 'bg-black/10'}`}>{t}</button>
+    <div className="absolute inset-0 z-0 overflow-hidden bg-[#dcdcd8] pointer-events-none">
+      {/* SVG Filter for the "Gooey" Ferrofluid Effect */}
+      <svg className="hidden">
+        <defs>
+          <filter id="magnetic-goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -12" result="goo" />
+            <feBlend in="SourceGraphic" in2="goo" />
+          </filter>
+        </defs>
+      </svg>
+      
+      {/* The Liquid Layer */}
+      <div className="absolute inset-0 opacity-80 mix-blend-multiply" style={{ filter: "url('#magnetic-goo')" }}>
+        <div className="absolute top-1/2 left-1/2 w-0 h-0">
+          {blobs.map(blob => (
+            <motion.div
+              key={blob.id}
+              className="absolute rounded-full"
+              style={{ 
+                width: blob.size, 
+                height: blob.size, 
+                backgroundColor: blob.color, 
+                marginLeft: -blob.size/2, 
+                marginTop: -blob.size/2 
+              }}
+              animate={{ x: blob.x, y: blob.y, scale: [1, 1.2, 0.8, 1.1, 1] }}
+              transition={{ duration: blob.duration, repeat: Infinity, ease: "easeInOut", delay: blob.delay }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Texture grain overlay */}
+      <div className="absolute inset-0 opacity-[0.25]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`, mixBlendMode: 'overlay' }} />
+    </div>
+  );
+};
+
+const TacticalLobster = ({ className = '', isMoving = false, isTyping = false }) => {
+  const leftClawRot = isTyping ? [-35, 0, -35] : (isMoving ? [-20, 0, -20] : 0);
+  const rightClawRot = isTyping ? [35, 0, 35] : (isMoving ? [20, 0, 20] : 0);
+  const animDuration = isTyping ? 0.1 : 0.3;
+
+  return (
+    <svg viewBox="0 0 24 36" className={className} fill="none">
+      <motion.path d="M 6 12 C 0 8 0 0 6 4 C 12 6 8 12 8 14 Z" fill="currentColor" animate={{ rotate: leftClawRot }} transition={{ repeat: Infinity, duration: animDuration }} style={{ originX: '8px', originY: '14px' }} />
+      <motion.path d="M 18 12 C 24 8 24 0 18 4 C 12 6 16 12 16 14 Z" fill="currentColor" animate={{ rotate: rightClawRot }} transition={{ repeat: Infinity, duration: animDuration }} style={{ originX: '16px', originY: '14px' }} />
+      <motion.path d="M 10 10 L 8 4 M 14 10 L 16 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" animate={{ rotate: isTyping ? [-10, 10, -10] : 0 }} transition={{ repeat: Infinity, duration: 0.1 }} style={{ originY: '10px' }} />
+      <rect x="8" y="12" width="8" height="14" rx="3" fill="currentColor" />
+      <path d="M 8 16 L 16 16 M 8 20 L 16 20" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.5" />
+      <motion.path d="M 8 25 L 5 32 L 12 30 L 19 32 L 16 25 Z" fill="currentColor" strokeLinejoin="round" />
+      <motion.g animate={{ y: isMoving ? [-1, 1, -1] : 0 }} transition={{ repeat: Infinity, duration: 0.2 }}>
+        <line x1="8" y1="15" x2="4" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="16" y1="15" x2="20" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="8" y1="21" x2="4" y2="24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="16" y1="21" x2="20" y2="24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </motion.g>
+    </svg>
+  );
+};
+
+// --- INTERNAL OS VIEWS ---
+
+const InputsView = () => {
+  const [activeTab, setActiveTab] = useState('txt');
+
+  return (
+    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
+      <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
+      <Crosshair className="top-2 left-2" />
+      <Crosshair className="top-2 right-2" />
+      
+      <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4 relative z-10">
+        <h2 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-2">
+          <Zap size={14} className="text-[#ff4500]" /> SYS_IN
+        </h2>
+        <div className="flex gap-1.5">
+          {['txt', 'mic', 'cam'].map(t => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`text-[8px] font-bold px-2 py-0.5 rounded uppercase transition-colors tracking-widest ${activeTab === t ? 'bg-black text-white shadow-[inset_0_0_5px_rgba(255,255,255,0.5)]' : 'bg-black/10 text-black/50 hover:bg-black/20'}`}
+            >
+              {t}
+            </button>
           ))}
         </div>
       </motion.div>
-      <div className="flex-1 flex flex-col gap-3">
-        {activeTab==='txt' && (<>
-          <textarea value={text} onChange={(e)=>setText(e.target.value)} className="flex-1 bg-white border-2 border-black rounded-xl p-3 text-[10px] resize-none" placeholder="Thought sequence..." />
-          <button onClick={handleSubmit} disabled={sending} className="bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase">{sending?'Sending...':'Commit'}</button>
-        </>)}
-        {activeTab==='mic' && <div className="flex-1 flex items-center justify-center bg-white border-2 border-black rounded-xl"><div className="w-16 h-16 bg-black rounded-full flex items-center justify-center"><Mic size={20} className="text-white"/></div></div>}
-        {activeTab==='cam' && <div className="flex-1 bg-black rounded-xl border-2 border-black flex items-center justify-center"><Camera size={32} className="text-white/50"/></div>}
+      
+      <div className="flex-1 relative z-10 overflow-hidden pb-4">
+        <AnimatePresence mode="wait">
+          {activeTab === 'txt' && (
+            <motion.div key="txt" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
+              <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
+                <CheckSquare size={10} /> Append Data Node
+              </div>
+              <textarea className="flex-1 w-full bg-white border-2 border-black rounded-xl p-3 text-[10px] resize-none focus:outline-none focus:border-[#ff4500] shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]" placeholder="Initialize thought sequence..." />
+              <button className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95">Commit Entry</button>
+            </motion.div>
+          )}
+          {activeTab === 'mic' && (
+            <motion.div key="mic" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col items-center justify-center gap-6 bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]">
+              <div className="text-[8px] uppercase tracking-widest text-[#ff4500] font-bold flex items-center gap-1.5 animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ff4500]" /> Recording Active
+              </div>
+              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center relative cursor-pointer group shadow-lg">
+                <div className="absolute inset-0 rounded-full bg-[#ff4500]/30 scale-[1.3] animate-ping pointer-events-none" />
+                <Mic size={20} className="text-white group-hover:text-[#ff4500] transition-colors relative z-10" />
+              </div>
+              <div className="flex gap-1 h-8 items-center mt-2">
+                {[...Array(14)].map((_, i) => (
+                  <motion.div key={i} animate={{ height: [4, Math.random()*24+4, 4] }} transition={{ duration: 0.5, repeat: Infinity, delay: i*0.1 }} className="w-1.5 bg-black rounded-full" />
+                ))}
+              </div>
+            </motion.div>
+          )}
+          {activeTab === 'cam' && (
+            <motion.div key="cam" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
+              <div className="flex-1 bg-black rounded-xl relative overflow-hidden flex items-center justify-center border-2 border-black group shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]">
+                {/* Simulated Optical Feed */}
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 grayscale group-hover:grayscale-0 transition-all duration-500" />
+                <div className="absolute inset-0 bg-blue-500/10 mix-blend-color pointer-events-none" />
+                <Crosshair className="top-4 left-4 text-white" />
+                <Crosshair className="bottom-4 right-4 text-white" />
+                {/* Center Focus Reticle */}
+                <div className="w-12 h-12 border border-white/50 rounded-full flex items-center justify-center relative z-10">
+                  <div className="w-1 h-1 bg-[#ff4500] rounded-full" />
+                </div>
+              </div>
+              <button className="w-full bg-white border-2 border-black text-black py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] hover:text-white hover:border-[#ff4500] transition-colors flex items-center justify-center gap-2 active:scale-95 shadow-md">
+                <Camera size={12} /> Capture Visual
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
-}
+};
 
-function ScheduleView() {
-  const [events,setEvents]=useState([]);
-  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?section=eq.streams&limit=10').then(r=>r.json()).then(d=>setEvents(d.streams||[])).catch(()=>{});},[]);
+const ScheduleView = () => (
+  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-12">
+    <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
+    <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4 relative z-10">
+      <h2 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-2">
+        <Calendar size={14} /> TIMELINE
+      </h2>
+      <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded font-bold tracking-widest shadow-[inset_0_0_5px_rgba(255,255,255,0.5)]">MAR_07</span>
+    </motion.div>
+    
+    <div className="flex-1 overflow-y-auto relative z-10 scrollbar-hide ml-2 pl-4 space-y-4 pb-4">
+      {/* Animated Connecting Line */}
+      <svg className="absolute left-[-1px] top-4 bottom-0 w-4 h-full pointer-events-none">
+        <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
+      </svg>
+
+      {MOCK_SCHEDULE.map((item, i) => (
+        <motion.div variants={itemVars} key={i} className="relative group">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
+          <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
+             {item.time} {i === 1 && <span className="w-1 h-1 bg-[#ff4500] rounded-full animate-pulse" />}
+          </div>
+          <div className="bg-white border-2 border-black rounded-lg p-2.5 shadow-[3px_3px_0_0_rgba(0,0,0,0.2)] group-hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-shadow">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.title}</div>
+            <div className="text-[7px] uppercase mt-1 opacity-60 font-bold text-black/60">// {item.type}</div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const TasksView = () => {
+  const [tasks, setTasks] = useState(MOCK_TASKS);
+  
+  const toggleTask = (id) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  const completed = tasks.filter(t => t.done).length;
+  const progress = Math.round((completed / tasks.length) * 100);
+
   return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-mono text-black pt-12">
-      <motion.div variants={itemVars} className="flex justify-between border-b-2 border-black pb-2 mb-4"><h2 className="text-[12px] font-bold uppercase"><Calendar size={14}/> TIMELINE</h2><span className="text-[8px] bg-black text-white px-2 py-0.5 rounded">MAR_07</span></motion.div>
-      <div className="flex-1 overflow-y-auto space-y-3">
-        {events.length===0 && <div className="text-[10px] opacity-50">No streams</div>}
-        {events.map((e,i)=>(
-          <motion.div variants={itemVars} key={i} className="bg-white border-2 border-black p-2 rounded-lg">
-            <div className="text-[10px] font-bold">{e.title||e.activity||'Stream'}</div>
-            <div className="text-[7px] opacity-50">{e.scheduled_for?.slice(0,16)}</div>
+    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-12 overflow-hidden screen-phosphor">
+      <div className="absolute inset-0 bg-tech-grid opacity-10 pointer-events-none invert" />
+      
+      <motion.div variants={itemVars} className="border-2 border-white/20 p-2 mb-4 relative z-10 bg-[#00ff41]/5 backdrop-blur-sm flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#00ff41] flex items-center gap-2">
+             <Terminal size={10} /> SYS_TASKS
+          </h2>
+          <span className="text-[8px] text-[#00ff41] font-bold">{progress}%</span>
+        </div>
+        <div className="text-[8px] text-white/30 tracking-widest flex items-center">
+          [
+          <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.5, type: 'spring' }} className="h-2 bg-[#00ff41] text-[#0a0a0a] overflow-hidden whitespace-nowrap flex items-center shadow-[0_0_10px_rgba(0,255,65,0.8)]">
+            ██████████
           </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function TasksView() {
-  const [tasks,setTasks]=useState([]);
-  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_tasks').then(r=>r.json()).then(d=>setTasks(d.tasks||[])).catch(()=>{});},[]);
-  const toggle = async(id,done)=>{await fetch(SUPABASE_URL + '/rest/v1/lifeos_tasks?id=eq.' + id,{method:'PATCH', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },body:JSON.stringify({completed:!done})});setTasks(tasks.map(t=>t.id===id?{...t,completed:!done}:t));};
-  const done=tasks.filter(t=>t.completed).length;
-  const pct=tasks.length?Math.round(done/tasks.length*100):0;
-  return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-mono text-white pt-12">
-      <motion.div variants={itemVars} className="border border-[#00ff41] p-2 mb-4">
-        <div className="flex justify-between text-[#00ff41] text-[10px] font-bold"><Terminal size={10}/> TASKS <span>{pct}%</span></div>
-        <div className="h-1 bg-[#00ff41]" style={{width:`${pct}%`}}/>
+          <span className="flex-1 opacity-50">----------</span>
+          ]
+        </div>
       </motion.div>
-      <div className="flex-1 overflow-y-auto space-y-2">
-        {tasks.map(t=>(
-          <motion.div variants={itemVars} key={t.id} onClick={()=>toggle(t.id,t.completed)} className="flex gap-2 cursor-pointer p-2 border-b border-dashed border-white/20">
-            <div className={`w-3 h-3 border ${t.completed?'bg-[#00ff41]':''}`}/>
-            <span className={`text-[9px] ${t.completed?'line-through opacity-50':''}`}>{t.title}</span>
+
+      <div className="flex-1 overflow-y-auto space-y-2 scrollbar-hide pb-4 relative z-10">
+        {tasks.map((task) => (
+          <motion.div 
+            variants={itemVars} 
+            key={task.id} 
+            onClick={() => toggleTask(task.id)}
+            className="flex items-start gap-3 p-2.5 border-b border-dashed border-white/20 group cursor-pointer hover:bg-white/10 transition-colors"
+          >
+            <div className={`mt-0.5 w-3 h-3 border flex items-center justify-center shrink-0 transition-colors ${task.done ? 'bg-[#00ff41] border-[#00ff41] text-black shadow-[0_0_8px_rgba(0,255,65,0.6)]' : 'border-white/50 text-transparent group-hover:border-white'}`}>
+              <AnimatePresence>
+                {task.done && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}><CheckSquare size={8} /></motion.div>}
+              </AnimatePresence>
+            </div>
+            <span className={`text-[9px] leading-snug tracking-wide transition-all ${task.done ? 'line-through opacity-50 text-[#00ff41]' : 'opacity-100'}`}>
+              {task.text}
+            </span>
           </motion.div>
         ))}
       </div>
     </motion.div>
   );
-}
+};
 
-function CortexView() {
-  const [items,setItems]=useState([]);
-  useEffect(()=>{fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex').then(r=>r.json()).then(d=>setItems(d.entries?.slice(0,10)||[])).catch(()=>{});},[]);
-  return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-mono text-black pt-12">
-      <motion.div variants={itemVars} className="flex justify-between border-b-4 border-black pb-2 mb-4"><h2 className="text-[14px] font-bold uppercase"><Brain/> CORTEX</h2><span className="text-[8px] bg-black text-[#ff4500] px-2 py-0.5">SYNCED</span></motion.div>
-      <div className="flex-1 overflow-y-auto space-y-3">
-        {items.map((i,idx)=>(
-          <motion.div variants={itemVars} key={i.id||idx} className="bg-black text-[#ff4500] p-3 border-l-4">
-            <div className="text-[7px] text-white/50">{new Date(i.created_at).toLocaleTimeString()}</div>
-            <div className="text-[9px] font-bold">{i.title}</div>
-          </motion.div>
+const CortexView = () => (
+  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-12 overflow-hidden">
+    {/* Animated background rings */}
+    <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-40 h-40 border-2 border-dashed border-black/20 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none" />
+    <motion.div initial={{ rotate: 360 }} animate={{ rotate: 0 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-56 h-56 border-4 border-black/10 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none flex items-center justify-center">
+       <div className="w-1 h-full bg-black/10" />
+    </motion.div>
+    
+    <motion.div variants={itemVars} className="flex justify-between items-end border-b-4 border-black pb-2 mb-4 relative z-10">
+      <h2 className="text-[14px] font-bold uppercase tracking-tighter flex items-center gap-1">
+        <Brain size={16} className="text-black fill-black" /> CORTEX_MEM
+      </h2>
+      <span className="text-[8px] bg-black text-[#ff4500] px-2 py-0.5 uppercase tracking-widest font-bold shadow-[2px_2px_0_0_rgba(0,0,0,0.5)] flex items-center gap-1">
+        <div className="w-1 h-1 bg-[#ff4500] rounded-full animate-ping" /> SYNCED
+      </span>
+    </motion.div>
+
+    <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
+      {MOCK_CORTEX.map((item, i) => (
+        <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
+          <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.time}</div>
+          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.text}</div>
+        </motion.div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const SystemView = () => (
+  <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-space-mono text-[#00ff41] relative z-10 pt-12 overflow-hidden screen-phosphor">
+    <motion.div variants={itemVars} className="flex justify-between items-center border-b border-[#00ff41]/50 pb-2 mb-4 relative z-10">
+      <span className="text-[10px] font-bold tracking-widest flex items-center gap-2">
+        <Cpu size={12} /> TELEMETRY_DUMP
+      </span>
+      <div className="w-1.5 h-3 bg-[#00ff41] animate-pulse shadow-[0_0_8px_rgba(0,255,65,0.8)]" />
+    </motion.div>
+    
+    <motion.div variants={itemVars} className="flex-1 overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black z-10 pointer-events-none" />
+      <motion.div 
+        animate={{ y: [0, -400] }} 
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        className="text-[7px] leading-relaxed tracking-widest opacity-80 flex flex-col gap-1.5"
+      >
+        {[...Array(60)].map((_, i) => (
+          <div key={i} className="flex gap-4 border-b border-[#00ff41]/10 pb-0.5">
+            <span className="opacity-50">0x{Math.floor(Math.random()*16777215).toString(16).padStart(6, '0').toUpperCase()}</span>
+            <span className="opacity-70">{Math.random() > 0.85 ? 'ERR_BUFFER_OVERFLOW' : 'MEM_ALLOC_OK'}</span>
+            <span className="ml-auto opacity-40">{Math.floor(Math.random() * 99)}ms</span>
+          </div>
         ))}
+      </motion.div>
+    </motion.div>
+    
+    <motion.div variants={itemVars} className="mt-auto pt-3 border-t border-[#00ff41]/50 flex flex-col gap-2 relative z-10">
+      <div className="flex items-center gap-2">
+        <span className="text-[8px] w-8">CPU</span>
+        <div className="flex-1 flex gap-0.5 h-3 items-end">
+          {[...Array(15)].map((_, i) => (
+            <motion.div key={i} animate={{ height: [Math.random()*12, Math.random()*12, Math.random()*12] }} transition={{ duration: 0.2, repeat: Infinity }} className="flex-1 bg-[#00ff41]/80" />
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[8px] w-8">RAM</span>
+        <div className="flex-1 bg-white/10 h-2 border border-[#00ff41]/30">
+          <motion.div className="h-full bg-[#00ff41]" animate={{ width: ['80%', '85%', '78%', '82%'] }} transition={{ duration: 2, repeat: Infinity }} />
+        </div>
       </div>
     </motion.div>
-  );
-}
+  </motion.div>
+);
 
-function SystemView() {
-  return (
-    <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-mono text-[#00ff41] pt-12">
-      <motion.div variants={itemVars} className="flex justify-between border-b border-[#00ff41]/50 pb-2 mb-4"><span className="text-[10px] font-bold"><Cpu/> TELEMETRY</span><div className="w-2 h-2 bg-[#00ff41] rounded-full animate-pulse"/></motion.div>
-      <div className="flex-1 font-[7px] opacity-70 leading-relaxed">
-        {[...Array(30)].map((_,i)=><div key={i} className="flex gap-4"><span>0x{Math.floor(Math.random()*16777215).toString(16).toUpperCase()}</span><span>{Math.random()>0.9?'ERR':'OK'}</span></div>)}
-      </div>
-    </motion.div>
-  );
-}
+// --- MAIN DEVICE COMPONENT ---
 
 export default function App() {
-  const [idx,setIdx]=useState(0);
-  const [view,setView]=useState('menu');
-  const [time,setTime]=useState('12:00');
-  const [led,setLed]=useState('#9ca3af');
-  const [pressed,setPressed]=useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentView, setCurrentView] = useState('menu'); 
+  const [time, setTime] = useState('12:00');
+  const [date, setDate] = useState('MAR 07');
+  const [pressedKey, setPressedKey] = useState(null);
 
-  useEffect(()=>{setInterval(()=>setTime(new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})),1000);},[]);
-  useEffect(()=>{setLed(view==='inputs'?'#ff4500':view==='schedule'?'#3b82f6':view==='tasks'?'#00ff41':view==='cortex'?'#eab308':'#00ff41');},[view]);
+  // 3D Parallax State
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
 
-  const up=()=>{setPressed('up');setTimeout(()=>setPressed(null),150);if(view==='menu')setIdx(i=>Math.max(0,i-1));};
-  const down=()=>{setPressed('down');setTimeout(()=>setPressed(null),150);if(view==='menu')setIdx(i=>Math.min(MENU_ITEMS.length-1,i+1));};
-  const enter=()=>{setPressed('center');setTimeout(()=>setPressed(null),150);if(view==='menu')setView(MENU_ITEMS[idx].id);};
-  const back=()=>{setPressed('left');setTimeout(()=>setPressed(null),150);setView('menu');};
-  useEffect(()=>{const k=e=>{if(e.key==='ArrowUp')up();if(e.key==='ArrowDown')down();if(e.key==='Enter')enter();if(e.key==='Escape'||e.key==='ArrowLeft')back();};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[view,idx]);
+  // Mouse Parallax effect
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      // Calculate rotation based on cursor position (-8 to +8 degrees)
+      const x = (e.clientX / window.innerWidth - 0.5) * 16;
+      const y = (e.clientY / window.innerHeight - 0.5) * -16;
+      setRotateX(y);
+      setRotateY(x);
+    };
+    
+    const handleMouseLeave = () => {
+      setRotateX(0);
+      setRotateY(0);
+    };
 
-  const content=view==='inputs'?InputsView:view==='schedule'?ScheduleView:view==='tasks'?TasksView:view==='cortex'?CortexView:SystemView;
+    window.addEventListener('mousemove', handleMouseMove);
+    document.body.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.body.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
 
-  return (
-    <div className="w-[320px] h-[640px] mx-auto mt-4 relative">
-      <div className="absolute inset-0 bg-black/30 blur-2xl rounded-[3rem]"/>
-      <div className="absolute inset-0 bg-[#EFEFEA] rounded-[3rem] shadow-[inset_3px_6px_12px_#fff,inset_-6px_-8px_20px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.2)] border border-[#d1d1cc] overflow-hidden flex flex-col">
-        <div className="absolute top-[-2] left-1/2 -translate-x-1/2 w-20 h-1.5 bg-[#ff4500] rounded-b-md"/>
-        <div className="absolute top-4 left-4 flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor:led,boxShadow:`0 0 10px ${led}`}}/></div>
-        
-        <div className="w-[85%] mx-auto mt-10 h-[320px] bg-black rounded-xl border-8 border-[#1a1a1a] overflow-hidden flex flex-col">
-          <div className="absolute top-2 left-0 right-0 flex justify-between px-2 text-[7px] text-white/60 font-mono"><div className="flex gap-1"><Wifi size={8} className="text-[#00ff41]"/><span>LINK</span></div><div>{time}</div></div>
-          <AnimatePresence mode="wait">
-            <motion.div key={view} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex-1 overflow-hidden">{React.createElement(content)}</motion.div>
-          </AnimatePresence>
-        </div>
+  // Clock simulation
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setDate(now.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toUpperCase());
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Hardware controls mapping
+  const scrollUp = () => {
+    setPressedKey('up');
+    setTimeout(() => setPressedKey(null), 150);
+    if (currentView === 'menu') setActiveIndex((prev) => Math.max(0, prev - 1));
+  };
 
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-[200px] h-[200px] rounded-full bg-[#9CA3AF] shadow-[inset_0_15px_25px_rgba(0,0,0,0.15),inset_0_-4px_10px_#fff,0_8px_20px_rgba(0,0,0,0.4)] relative flex items-center justify-center">
-            <div className="absolute inset-0 border-[30px] border-[#8e95a1] rounded-full opacity-30"/>
-            <div className="absolute w-[160px] h-1.5 bg-[#888] rounded-full"/>
-            <div className="absolute h-[160px] w-1.5 bg-[#888] rounded-full"/>
-            <div className="absolute w-5 h-5 bg-[#777] rounded-full"/>
-            <div className="absolute inset-0 flex flex-col">
-              <button onPointerDown={up} className="h-1/3 w-full rounded-t-full outline-none"/>
-              <div className="h-1/3 flex"><button onPointerDown={back} className="w-1/3 h-full rounded-l-full"/><button onPointerDown={enter} className="w-1/3 h-full"/><div className="w-1/3 h-full rounded-r-full"/></div>
-              <button onPointerDown={down} className="h-1/3 w-full rounded-b-full outline-none"/>
+  const scrollDown = () => {
+    setPressedKey('down');
+    setTimeout(() => setPressedKey(null), 150);
+    if (currentView === 'menu') setActiveIndex((prev) => Math.min(MENU_ITEMS.length - 1, prev + 1));
+  };
+
+  const enterView = () => {
+    setPressedKey('center');
+    setTimeout(() => setPressedKey(null), 150);
+    if (currentView === 'menu') setCurrentView(MENU_ITEMS[activeIndex].id);
+  };
+
+  const goBack = () => {
+    setPressedKey('left');
+    setTimeout(() => setPressedKey(null), 150);
+    setCurrentView('menu');
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowUp') scrollUp();
+      if (e.key === 'ArrowDown') scrollDown();
+      if (e.key === 'Enter') enterView();
+      if (e.key === 'Escape' || e.key === 'ArrowLeft') goBack();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentView, activeIndex]);
+
+  // Dynamic LED Color based on View
+  const ledColor = useMemo(() => {
+    switch (currentView) {
+      case 'inputs': return '#ff4500'; // Orange
+      case 'schedule': return '#3b82f6'; // Blue
+      case 'tasks': return '#00ff41'; // Matrix Green
+      case 'cortex': return '#eab308'; // Yellow
+      case 'system': return '#00ff41'; // Matrix Green
+      default: return '#9ca3af'; // Default Grey
+    }
+  }, [currentView]);
+
+  const renderScreenContent = () => {
+    switch (currentView) {
+      case 'inputs': return <InputsView />;
+      case 'schedule': return <ScheduleView />;
+      case 'tasks': return <TasksView />;
+      case 'cortex': return <CortexView />;
+      case 'system': return <SystemView />;
+      default:
+        // HOME MENU
+        return (
+          <div className="w-full h-full relative bg-[#e5e5e5] flex items-center justify-start overflow-hidden">
+            <MagneticInkBackground />
+            
+            <Crosshair className="top-4 left-4" />
+            <Crosshair className="bottom-4 right-4" />
+
+            {/* Shifted Menu Container */}
+            <div className="absolute inset-0 z-20 flex items-center justify-start pl-8 pointer-events-none" style={{ transform: 'rotate(-8deg)' }}>
+              <div className="relative flex flex-col gap-4 w-full">
+                
+                {/* The Lobster Target Indicator */}
+                <motion.div 
+                  className="absolute -left-5 z-30 text-[#ff4500] drop-shadow-[0_0_10px_rgba(255,69,0,0.8)] w-8 h-8 pointer-events-none"
+                  initial={false}
+                  animate={{ y: activeIndex * 64 + 8 }} // 48px item + 16px gap = 64px step. +8px offset to center the lobster vertically next to the active item
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                >
+                  <TacticalLobster className="w-full h-full rotate-90" isMoving={pressedKey === 'up' || pressedKey === 'down'} isTyping={pressedKey === 'center'} />
+                </motion.div>
+
+                {/* Animated Curved Menu Items */}
+                {MENU_ITEMS.map((item, i) => {
+                  const isActive = i === activeIndex;
+                  const offset = Math.abs(activeIndex - i);
+                  const curve = offset * offset * 5; // Creates the parabolic bulge
+                  
+                  return (
+                    <motion.div 
+                      key={item.id} 
+                      className="flex items-center gap-3 h-12 pointer-events-auto cursor-pointer"
+                      animate={{ 
+                        x: curve,
+                        opacity: Math.max(0.2, 1 - offset * 0.3),
+                        scale: isActive ? 1.05 : 0.95
+                      }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        if (isActive) enterView();
+                        else setActiveIndex(i);
+                      }}
+                    >
+                      <div className={`w-2 h-2 rounded-full transition-colors duration-300 shrink-0 ${isActive ? 'bg-[#ff4500] shadow-[0_0_10px_#ff4500]' : 'bg-black/30'}`} />
+                      <div className={`py-2 px-4 flex flex-col justify-center border-2 rounded-2xl transition-all duration-300 w-44 ${isActive ? 'bg-black text-white border-[#ff4500] shadow-[4px_4px_0_0_#ff4500]' : 'bg-white/70 backdrop-blur-sm text-black border-black/20 hover:border-black/50'}`}>
+                        <span className="font-bold text-[12px] font-space-mono tracking-widest uppercase leading-none">{item.label}</span>
+                        {isActive && <span className="text-[7px] text-[#ff4500] mt-1.5 uppercase tracking-wider block">{item.desc}</span>}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
+        );
+    }
+  };
+
+  const getDPadTransform = () => {
+    switch(pressedKey) {
+      case 'up': return 'rotateX(15deg) translateY(-4px)';
+      case 'down': return 'rotateX(-15deg) translateY(4px)';
+      case 'left': return 'rotateY(-15deg) translateX(-4px)';
+      case 'right': return 'rotateY(15deg) translateX(4px)';
+      case 'center': return 'scale(0.94) translateZ(-6px)';
+      default: return 'rotateX(0deg) rotateY(0deg) translateZ(0px)';
+    }
+  };
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Space+Mono:wght@400;700&display=swap');
+        body { 
+          background: transparent; 
+          margin: 0; 
+          display: flex; 
+          justify-content: center; 
+          align-items: center; 
+          min-height: 100vh;
+          font-family: 'Space Grotesk', sans-serif;
+          perspective: 1200px;
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scanlines {
+          background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
+          background-size: 100% 4px;
+        }
+        .bg-tech-grid {
+          background-image: linear-gradient(rgba(0,0,0,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,1) 1px, transparent 1px);
+          background-size: 15px 15px; 
+        }
+        .screen-phosphor {
+          text-shadow: 0 0 8px currentColor;
+        }
+      `}} />
+
+      {/* --- PHYSICAL DEVICE SHELL WITH 3D PARALLAX TILT --- */}
+      <motion.div 
+        className="relative w-[340px] h-[680px] touch-none"
+        animate={{ rotateX, rotateY }}
+        transition={{ type: "spring", stiffness: 150, damping: 20, mass: 0.5 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        
+        {/* Dynamic Drop Shadow (Reacts to tilt) */}
+        <motion.div 
+          className="absolute inset-0 bg-black/40 rounded-[3.5rem] blur-2xl -z-10"
+          animate={{ x: -rotateY * 2, y: rotateX * 2 }}
+        />
+
+        {/* Top Right Metallic Loop */}
+        <div className="absolute top-[-15px] right-[25px] w-14 h-14 rounded-full border-[6px] border-[#8a8a93] bg-transparent shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_2px_4px_rgba(255,255,255,0.9)] z-0" style={{ transform: 'translateZ(-10px)' }} />
+
+        {/* Main Body */}
+        <div className="absolute inset-0 bg-[#EFEFEA] rounded-[3.5rem] shadow-[inset_3px_6px_12px_rgba(255,255,255,1),inset_-6px_-8px_20px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.2)] border border-[#d1d1cc] overflow-hidden z-10 flex flex-col relative">
+          
+          {/* Top Edge Detail & Dynamic LED */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-[#ff4500] rounded-b-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]" />
+          <div className="absolute top-5 left-6 flex items-center gap-2">
+            <div 
+              className={`w-2.5 h-2.5 rounded-full border border-black/20 transition-all duration-500 ${currentView !== 'menu' ? 'animate-pulse' : ''}`}
+              style={{ backgroundColor: ledColor, boxShadow: `0 0 12px ${ledColor}` }} 
+            />
+          </div>
+
+          {/* Device Shell Engraved Lobsters */}
+          <div className="absolute top-4 right-6 text-black/10 pointer-events-none">
+            <TacticalLobster className="w-4 h-4" />
+          </div>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-black/10 pointer-events-none">
+            <TacticalLobster className="w-6 h-6" />
+          </div>
+
+          {/* THE SCREEN ASSEMBLY */}
+          <div className="w-[88%] mx-auto mt-12 h-[360px] bg-black rounded-[1.5rem] border-[10px] border-[#1a1a1a] shadow-[inset_0_5px_25px_rgba(0,0,0,1),0_8px_20px_rgba(0,0,0,0.15)] relative overflow-hidden flex flex-col">
+            
+            {/* Screen Inner Bezel Shadow */}
+            <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] pointer-events-none z-40" />
+            
+            {/* OS Status Bar (Floating Pills) */}
+            <div className="absolute top-2 left-0 right-0 z-30 flex items-center justify-between px-3 text-[7px] font-space-mono font-bold tracking-widest text-white/80 pointer-events-none">
+               <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full shadow-lg">
+                 <Wifi size={8} className="text-[#00ff41]" />
+                 <span>LINK</span>
+               </div>
+               <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full shadow-lg screen-phosphor">
+                 {time}
+               </div>
+               <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full shadow-lg text-white">
+                 {date}
+               </div>
+            </div>
+
+            {/* View Header Back Button */}
+            <AnimatePresence>
+              {currentView !== 'menu' && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-9 left-3 z-30">
+                  <button onClick={goBack} className="w-7 h-7 bg-black/80 backdrop-blur-md border-2 border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors shadow-lg active:scale-90">
+                    <ArrowLeft size={12} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Screen Content Wrapper with Glitch Transition */}
+            <div className="flex-1 relative w-full h-full bg-[#111] overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={currentView}
+                  initial={{ opacity: 0, scale: 1.05, filter: 'blur(10px)', x: 10, y: Math.random() * 10 - 5 }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', x: 0, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)', x: -10, transition: { duration: 0.15 } }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="w-full h-full"
+                >
+                  {renderScreenContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            
+            {/* Screen Realism Overlays (Scanlines & Gloss) */}
+            <div className="absolute inset-0 scanlines pointer-events-none z-40 mix-blend-overlay" />
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-50 mix-blend-screen"
+              animate={{ opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+          </div>
+
+          {/* SPEAKER GRILL */}
+          <div className="w-full flex justify-center gap-1.5 mt-5 px-12 opacity-40">
+            {[...Array(14)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-black/80 shadow-[inset_0_1px_3px_rgba(0,0,0,1),0_1px_1px_rgba(255,255,255,0.8)]" />
+            ))}
+          </div>
+
+          {/* LOWER CONTROL PAD AREA */}
+          <div className="flex-1 flex items-center justify-center relative perspective-1000 mt-2">
+            {/* The Large Circular D-Pad Outer Ring */}
+            <div className="w-[230px] h-[230px] rounded-full bg-[#EFEFEA] shadow-[inset_0_8px_15px_rgba(255,255,255,1),inset_0_-8px_20px_rgba(0,0,0,0.1),0_12px_25px_rgba(0,0,0,0.2)] relative flex items-center justify-center border border-[#d1d1cc]">
+              
+              {/* The Inner Moving D-Pad */}
+              <motion.div 
+                className="w-[210px] h-[210px] rounded-full bg-[#9CA3AF] shadow-[inset_0_15px_25px_rgba(0,0,0,0.15),inset_0_-4px_10px_rgba(255,255,255,0.7),0_8px_20px_rgba(0,0,0,0.4)] relative flex items-center justify-center border border-[#888] overflow-hidden"
+                style={{ transformStyle: 'preserve-3d' }}
+                animate={{ transform: getDPadTransform() }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              >
+                {/* D-Pad Texture / Grip Rings */}
+                <div className="absolute inset-0 rounded-full border-[20px] border-[#8e95a1] opacity-40 pointer-events-none" />
+                <div className="absolute inset-0 rounded-full border-[40px] border-[#939ba6] opacity-40 pointer-events-none" />
+                
+                {/* Inner cross indent lines */}
+                <div className="absolute w-[170px] h-[8px] bg-[#888] rounded-full shadow-[inset_0_3px_6px_rgba(0,0,0,0.5),0_1px_2px_rgba(255,255,255,0.6)] pointer-events-none" />
+                <div className="absolute w-[8px] h-[170px] bg-[#888] rounded-full shadow-[inset_0_3px_6px_rgba(0,0,0,0.5),0_1px_2px_rgba(255,255,255,0.6)] pointer-events-none" />
+                
+                {/* Center indent bowl */}
+                <div className="absolute w-[28px] h-[28px] rounded-full bg-[#777] shadow-[inset_0_5px_10px_rgba(0,0,0,0.7),0_2px_4px_rgba(255,255,255,0.7)] pointer-events-none" />
+
+                {/* Functional Invisible Click Zones overlaid on the D-Pad */}
+                <div className="absolute inset-0 flex flex-col z-20 touch-none">
+                  <button onPointerDown={(e) => { e.preventDefault(); scrollUp(); }} className="h-1/3 w-full rounded-t-full outline-none cursor-pointer" title="Up" />
+                  <div className="h-1/3 w-full flex">
+                    <button onPointerDown={(e) => { e.preventDefault(); goBack(); }} className="w-1/3 h-full rounded-l-full outline-none cursor-pointer" title="Back" />
+                    <button onPointerDown={(e) => { e.preventDefault(); enterView(); }} className="w-1/3 h-full rounded-full outline-none cursor-pointer" title="Select" />
+                    <button onPointerDown={(e) => { e.preventDefault(); setPressedKey('right'); setTimeout(() => setPressedKey(null), 150); }} className="w-1/3 h-full rounded-r-full outline-none cursor-pointer" title="Forward" />
+                  </div>
+                  <button onPointerDown={(e) => { e.preventDefault(); scrollDown(); }} className="h-1/3 w-full rounded-b-full outline-none cursor-pointer" title="Down" />
+                </div>
+              </motion.div>
+            </div>
+          </div>
+          
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </>
   );
 }
