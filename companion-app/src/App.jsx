@@ -290,18 +290,6 @@ const InputsView = () => {
     // Startup removed
   }
   
-  const dailySchedule = [
-    { time: '06:00', title: '☀️ Wake Up', type: 'routine' },
-    { time: '07:00', title: '🍳 Breakfast', type: 'routine' },
-    { time: '08:00', title: '💪 Work Out', type: 'routine' },
-    { time: '10:00', title: '🎵 Music Time', type: 'creative' },
-    { time: '12:00', title: '📱 Content', type: 'work' },
-    { time: '14:00', title: '🎥 Stream Prep', type: 'content' },
-    { time: '18:00', title: '📺 Live Stream', type: 'stream' },
-    { time: '21:00', title: '🍽️ Dinner', type: 'routine' },
-    { time: '22:00', title: '🎧 Wind Down', type: 'routine' },
-  ];
-
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
       <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
@@ -318,7 +306,7 @@ const InputsView = () => {
           </div>
         )}
         <div className="flex gap-1.5">
-          {['voice', 'cam', 'txt'].map(t => (
+          {['VOICE', 'cam', 'txt'].map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
@@ -332,7 +320,7 @@ const InputsView = () => {
       
       <div className="flex-1 relative z-10 overflow-hidden pb-4">
         <AnimatePresence mode="wait">
-          {activeTab === 'txt' && (
+          {activeTab === 'VOICE' && (
             <motion.div key="txt" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="h-full flex flex-col gap-3">
               <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
                 <CheckSquare size={10} /> Append Data Node
@@ -354,7 +342,7 @@ const InputsView = () => {
         }} className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95" disabled={saving}>{saving ? 'Saving...' : 'Commit Entry'}</button>
             </motion.div>
           )}
-          {activeTab === 'voice' && (
+          {activeTab === 'VOICE' && (
             <motion.div key="VOICE" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center gap-4 bg-white border-2 border-black rounded-xl p-4">
               {!audioBlob ? (
                 <>
@@ -427,20 +415,7 @@ const InputsView = () => {
   );
 };
 
-const ScheduleView = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?order=created_at.desc&limit=20', {
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
-    }).then(r => r.json()).then(d => {
-      setEvents(d || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
-  
-  return (
+const ScheduleView = () => (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-12">
     <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
     <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4 relative z-10">
@@ -450,11 +425,13 @@ const ScheduleView = () => {
       <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded font-bold tracking-widest shadow-[inset_0_0_5px_rgba(255,255,255,0.5)]">MAR_07</span>
     </motion.div>
     
-    <div className="flex-1 overflow-y-auto p-2 space-y-2">
-      {dailySchedule.map((item, i) => (
-        <div key={i} className="text-[10px] p-1 border-b border-gray-200">{item.time} - {item.title}</div>
-      ))}
-      {events.map((item, i) => (
+    <div className="flex-1 overflow-y-auto relative z-10 scrollbar-hide ml-2 pl-4 space-y-4 pb-4">
+      {/* Animated Connecting Line */}
+      <svg className="absolute left-[-1px] top-4 bottom-0 w-4 h-full pointer-events-none">
+        <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
+      </svg>
+
+      {(events || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
           <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
@@ -469,7 +446,6 @@ const ScheduleView = () => {
     </div>
   </motion.div>
 );
-}
 
 const TasksView = () => {
   const [tasks, setTasks] = useState([]);
@@ -505,18 +481,6 @@ const TasksView = () => {
     // Startup removed
   }
   
-  const dailySchedule = [
-    { time: '06:00', title: '☀️ Wake Up', type: 'routine' },
-    { time: '07:00', title: '🍳 Breakfast', type: 'routine' },
-    { time: '08:00', title: '💪 Work Out', type: 'routine' },
-    { time: '10:00', title: '🎵 Music Time', type: 'creative' },
-    { time: '12:00', title: '📱 Content', type: 'work' },
-    { time: '14:00', title: '🎥 Stream Prep', type: 'content' },
-    { time: '18:00', title: '📺 Live Stream', type: 'stream' },
-    { time: '21:00', title: '🍽️ Dinner', type: 'routine' },
-    { time: '22:00', title: '🎧 Wind Down', type: 'routine' },
-  ];
-
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-6 overflow-hidden screen-phosphor">
       <div className="absolute inset-0 bg-tech-grid opacity-10 pointer-events-none invert" />
@@ -561,20 +525,7 @@ const TasksView = () => {
   );
 };
 
-const CortexView = () => {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex?order=created_at.desc&limit=20', {
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
-    }).then(r => r.json()).then(d => {
-      setItems(d || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
-  
-  return (
+const CortexView = () => (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-6 overflow-hidden">
     {/* Animated background rings */}
     <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-40 h-40 border-2 border-dashed border-black/20 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none" />
@@ -592,7 +543,7 @@ const CortexView = () => {
     </motion.div>
 
     <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
-      {(items || []).map((item, i) => (
+      {(cortexData || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
           <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
           <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.displayText}</div>
@@ -601,7 +552,6 @@ const CortexView = () => {
     </div>
   </motion.div>
 );
-}
 
 const SystemView = () => (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-black p-4 font-space-mono text-[#00ff41] relative z-10 pt-6 overflow-hidden screen-phosphor">
