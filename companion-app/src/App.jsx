@@ -290,6 +290,18 @@ const InputsView = () => {
     // Startup removed
   }
   
+  const dailySchedule = [
+    { time: '06:00', title: '☀️ Wake Up', type: 'routine' },
+    { time: '07:00', title: '🍳 Breakfast', type: 'routine' },
+    { time: '08:00', title: '💪 Work Out', type: 'routine' },
+    { time: '10:00', title: '🎵 Music Time', type: 'creative' },
+    { time: '12:00', title: '📱 Content', type: 'work' },
+    { time: '14:00', title: '🎥 Stream Prep', type: 'content' },
+    { time: '18:00', title: '📺 Live Stream', type: 'stream' },
+    { time: '21:00', title: '🍽️ Dinner', type: 'routine' },
+    { time: '22:00', title: '🎧 Wind Down', type: 'routine' },
+  ];
+
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
       <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
@@ -444,6 +456,23 @@ const ScheduleView = () => {
         <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
       </svg>
 
+      {/* Daily Schedule Template */}
+      {dailySchedule.map((item, i) => (
+        <motion.div variants={itemVars} key={'daily-'+i} className="relative group opacity-40">
+          <div className="text-[8px] font-bold opacity-50 mb-1">{item.time}</div>
+          <div className="bg-white/50 border border-black/20 rounded-lg p-2">
+            <div className="text-[10px] font-bold">{item.title}</div>
+            <div className="text-[7px] uppercase mt-1 opacity-60">// {item.type}</div>
+          </div>
+        </motion.div>
+      ))}
+      
+      {/* Real Events */}
+      {events.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-dashed border-black/30">
+          <div className="text-[8px] font-bold uppercase mb-2 opacity-60">// YOUR EVENTS</div>
+        </div>
+      )}
       {(events || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
@@ -495,6 +524,18 @@ const TasksView = () => {
     // Startup removed
   }
   
+  const dailySchedule = [
+    { time: '06:00', title: '☀️ Wake Up', type: 'routine' },
+    { time: '07:00', title: '🍳 Breakfast', type: 'routine' },
+    { time: '08:00', title: '💪 Work Out', type: 'routine' },
+    { time: '10:00', title: '🎵 Music Time', type: 'creative' },
+    { time: '12:00', title: '📱 Content', type: 'work' },
+    { time: '14:00', title: '🎥 Stream Prep', type: 'content' },
+    { time: '18:00', title: '📺 Live Stream', type: 'stream' },
+    { time: '21:00', title: '🍽️ Dinner', type: 'routine' },
+    { time: '22:00', title: '🎧 Wind Down', type: 'routine' },
+  ];
+
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-6 overflow-hidden screen-phosphor">
       <div className="absolute inset-0 bg-tech-grid opacity-10 pointer-events-none invert" />
