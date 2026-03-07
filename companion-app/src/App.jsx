@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StartupScreen from './StartupScreen';
 import { 
   CheckSquare, Mic, Camera, MessageSquare, 
   Calendar, Brain, ArrowLeft, Plus, MoreHorizontal,
@@ -72,6 +73,10 @@ const MagneticInkBackground = () => {
     color: i % 3 === 0 ? '#000000' : i % 3 === 1 ? '#111111' : '#222222'
   })), []);
 
+  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-[#dcdcd8] pointer-events-none">
       {/* SVG Filter for the "Gooey" Ferrofluid Effect */}
@@ -117,6 +122,10 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
   const rightClawRot = isTyping ? [35, 0, 35] : (isMoving ? [20, 0, 20] : 0);
   const animDuration = isTyping ? 0.1 : 0.3;
 
+  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
   return (
     <svg viewBox="0 0 24 36" className={className} fill="none">
       <motion.path d="M 6 12 C 0 8 0 0 6 4 C 12 6 8 12 8 14 Z" fill="currentColor" animate={{ rotate: leftClawRot }} transition={{ repeat: Infinity, duration: animDuration }} style={{ originX: '8px', originY: '14px' }} />
@@ -237,6 +246,10 @@ const InputsView = () => {
     setSaving(false);
   };
 
+  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-10">
       <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
@@ -424,6 +437,10 @@ const TasksView = () => {
   const completed = tasks.filter(t => t.done).length;
   const progress = Math.round((completed / tasks.length) * 100);
 
+  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
   return (
     <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#0a0a0a] p-4 font-space-mono text-white relative z-10 pt-12 overflow-hidden screen-phosphor">
       <div className="absolute inset-0 bg-tech-grid opacity-10 pointer-events-none invert" />
@@ -545,6 +562,7 @@ const SystemView = () => (
 
 export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [started, setStarted] = useState(false);
   const [currentView, setCurrentView] = useState('menu'); 
   const [time, setTime] = useState('12:00');
   const [date, setDate] = useState('MAR 07');
@@ -572,7 +590,11 @@ export default function App() {
     window.addEventListener('mousemove', handleMouseMove);
     document.body.addEventListener('mouseleave', handleMouseLeave);
     
-    return () => {
+    if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
+  return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       document.body.removeEventListener('mouseleave', handleMouseLeave);
     };
@@ -587,7 +609,11 @@ export default function App() {
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+    if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
+  return () => clearInterval(interval);
   }, []);
   
   // Hardware controls mapping
@@ -624,7 +650,11 @@ export default function App() {
       if (e.key === 'Escape' || e.key === 'ArrowLeft') goBack();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
+  return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView, activeIndex]);
 
   // Dynamic LED Color based on View
@@ -648,7 +678,11 @@ export default function App() {
       case 'system': return <SystemView />;
       default:
         // HOME MENU
-        return (
+        if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
+  return (
           <div className="w-full h-full relative bg-[#e5e5e5] flex items-center justify-start overflow-hidden">
             <MagneticInkBackground />
             
@@ -675,7 +709,11 @@ export default function App() {
                   const offset = Math.abs(activeIndex - i);
                   const curve = offset * offset * 5; // Creates the parabolic bulge
                   
-                  return (
+                  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
+  return (
                     <motion.div 
                       key={item.id} 
                       className="flex items-center gap-3 h-12 pointer-events-auto cursor-pointer"
@@ -717,6 +755,10 @@ export default function App() {
     }
   };
 
+  if (!started) {
+    return <StartupScreen onComplete={() => setStarted(true)} />;
+  }
+  
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
