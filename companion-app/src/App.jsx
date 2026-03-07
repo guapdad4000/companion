@@ -247,10 +247,30 @@ const ScheduleView = () => (
 );
 
 const TasksView = () => {
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(SUPABASE_URL + "/rest/v1/lifeos_tasks?select=*&order=created_at.desc", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    }).then(r => r.json()).then(data => {
+      setTasks(data || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
   
-  const toggleTask = (id) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const toggleTask = async (id, currentDone) => {
+    const newDone = !currentDone;
+    await fetch(SUPABASE_URL + '/rest/v1/lifeos_tasks?id=eq.' + id, {
+      method: 'PATCH',
+      headers: { 
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY, 
+        'Authorization': 'Bearer ' + SUPABASE_KEY 
+      },
+      body: JSON.stringify({ status: newDone ? 'completed' : 'pending' })
+    });
+    setTasks(tasks.map(t => t.id === id ? { ...t, done: newDone } : t));
   };
 
   const completed = tasks.filter(t => t.done).length;
