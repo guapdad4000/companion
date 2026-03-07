@@ -450,30 +450,11 @@ const ScheduleView = () => {
       <span className="text-[8px] bg-black text-white px-2 py-0.5 rounded font-bold tracking-widest shadow-[inset_0_0_5px_rgba(255,255,255,0.5)]">MAR_07</span>
     </motion.div>
     
-    <div className="flex-1 overflow-y-auto relative z-10 scrollbar-hide ml-2 pl-4 space-y-4 pb-4">
-      {/* Animated Connecting Line */}
-      <svg className="absolute left-[-1px] top-4 bottom-0 w-4 h-full pointer-events-none">
-        <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
-      </svg>
-
-      {/* Daily Schedule Template */}
+    <div className="flex-1 overflow-y-auto p-2 space-y-2">
       {dailySchedule.map((item, i) => (
-        <motion.div variants={itemVars} key={'daily-'+i} className="relative group opacity-40">
-          <div className="text-[8px] font-bold opacity-50 mb-1">{item.time}</div>
-          <div className="bg-white/50 border border-black/20 rounded-lg p-2">
-            <div className="text-[10px] font-bold">{item.title}</div>
-            <div className="text-[7px] uppercase mt-1 opacity-60">// {item.type}</div>
-          </div>
-        </motion.div>
+        <div key={i} className="text-[10px] p-1 border-b border-gray-200">{item.time} - {item.title}</div>
       ))}
-      
-      {/* Real Events */}
-      {events.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-dashed border-black/30">
-          <div className="text-[8px] font-bold uppercase mb-2 opacity-60">// YOUR EVENTS</div>
-        </div>
-      )}
-      {(events || []).map((item, i) => (
+      {events.map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
           <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
