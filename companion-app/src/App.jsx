@@ -138,6 +138,12 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
 // --- INTERNAL OS VIEWS ---
 
 const InputsView = () => {
+  const [status, setStatus] = useState(null); // {type: 'success'|'error', message: ''}
+
+  const showStatus = (type, message) => {
+    setStatus({ type, message });
+    setTimeout(() => setStatus(null), 3000);
+  };
   const [activeTab, setActiveTab] = useState('txt');
   
   // Mic states
@@ -162,7 +168,7 @@ const InputsView = () => {
       recorder.start();
       setMediaRecorder(recorder);
       setRecording(true);
-    } catch(e) { console.error(e); alert('Mic access denied'); }
+    } catch(e) { console.error(e); showStatus('error', 'Mic access denied'); }
   };
 
   const stopRecording = () => {
@@ -183,7 +189,7 @@ const InputsView = () => {
           body: JSON.stringify({ title: '🎤 Voice ' + new Date().toLocaleString(), content: '[Voice note]', section: 'voice-notes', category: 'audio', metadata: { audio: base64 } })
         });
         setAudioBlob(null);
-        alert('Voice saved!');
+        showStatus('success', 'Voice saved to Cortex!');
       } catch(e) { console.error(e); }
       setSaving(false);
     };
@@ -196,7 +202,7 @@ const InputsView = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoEl) videoEl.srcObject = stream;
       setCameraActive(true);
-    } catch(e) { console.error(e); alert('Camera denied'); }
+    } catch(e) { console.error(e); showStatus('error', 'Camera access denied'); }
   };
 
   const stopCamera = () => {
@@ -225,7 +231,7 @@ const InputsView = () => {
         body: JSON.stringify({ title: '📷 Photo ' + new Date().toLocaleString(), content: '[Captured photo]', section: 'all_spark', category: 'visual', metadata: { image: base64 } })
       });
       setPhotoData(null);
-      alert('Photo saved!');
+      showStatus('success', 'Photo saved to Cortex!');
     } catch(e) { console.error(e); }
     setSaving(false);
   };
@@ -240,6 +246,11 @@ const InputsView = () => {
         <h2 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-2">
           <Zap size={14} className="text-[#ff4500]" /> SYS_IN
         </h2>
+        {status && (
+          <div className={`absolute top-12 left-0 right-0 mx-2 px-3 py-2 rounded-lg text-[10px] font-bold text-center z-50 ${status.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+            {status.message}
+          </div>
+        )}
         <div className="flex gap-1.5">
           {['txt', 'mic', 'cam'].map(t => (
             <button
