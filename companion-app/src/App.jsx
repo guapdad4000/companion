@@ -138,7 +138,8 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
 // --- INTERNAL OS VIEWS ---
 
 const InputsView = () => {
-  const [status, setStatus] = useState(null); // {type: 'success'|'error', message: ''}
+  const [status, setStatus] = useState(null);
+  const [text, setText] = useState('');
 
   const showStatus = (type, message) => {
     setStatus({ type, message });
@@ -183,7 +184,7 @@ const InputsView = () => {
     reader.onloadend = async () => {
       const base64 = reader.result.split(',')[1];
       try {
-        await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
+        const resAudio = await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
           body: JSON.stringify({ title: '🎤 Voice ' + new Date().toLocaleString(), content: '[Voice note]', section: 'voice-notes', category: 'audio', metadata: { audio: base64 } })
@@ -225,7 +226,7 @@ const InputsView = () => {
     setSaving(true);
     const base64 = photoData.split(',')[1];
     try {
-      await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
+      const resAudio = await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
         body: JSON.stringify({ title: '📷 Photo ' + new Date().toLocaleString(), content: '[Captured photo]', section: 'all_spark', category: 'visual', metadata: { image: base64 } })
@@ -271,8 +272,21 @@ const InputsView = () => {
               <div className="text-[8px] uppercase tracking-widest text-black/50 flex items-center gap-2">
                 <CheckSquare size={10} /> Append Data Node
               </div>
-              <textarea className="flex-1 w-full bg-white border-2 border-black rounded-xl p-3 text-[10px] resize-none focus:outline-none focus:border-[#ff4500] shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]" placeholder="Initialize thought sequence..." />
-              <button className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95">Commit Entry</button>
+              <textarea value={text} onChange={e => setText(e.target.value)} className="flex-1 w-full bg-white border-2 border-black rounded-xl p-3 text-[10px] resize-none focus:outline-none focus:border-[#ff4500] shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]" placeholder="Initialize thought sequence..." />
+              <button onClick={async () => {
+          if (!text.trim()) { showStatus('error', 'Enter some text first'); return; }
+          setSaving(true);
+          try {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/lifeos_cortex', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ title: text.slice(0,60), content: text, section: 'all_spark', category: 'idea' })
+            });
+            if (res.ok) { setText(''); showStatus('success', 'Saved to Cortex!'); }
+            else { showStatus('error', 'Failed to save'); }
+          } catch(e) { showStatus('error', 'Error: ' + e.message); }
+          setSaving(false);
+        }} className="w-full bg-black text-white py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-[#ff4500] transition-colors shadow-md active:scale-95" disabled={saving}>{saving ? 'Saving...' : 'Commit Entry'}</button>
             </motion.div>
           )}
           {activeTab === 'mic' && (
