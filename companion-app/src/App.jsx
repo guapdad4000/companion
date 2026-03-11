@@ -66,10 +66,6 @@ const MagneticInkBackground = () => {
     color: i % 3 === 0 ? '#000000' : i % 3 === 1 ? '#111111' : '#222222'
   })), []);
 
-  if (false) {
-    // Startup removed
-  }
-  
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-[#dcdcd8] pointer-events-none">
       {/* SVG Filter for the "Gooey" Ferrofluid Effect */}
@@ -115,10 +111,6 @@ const TacticalLobster = ({ className = '', isMoving = false, isTyping = false })
   const rightClawRot = isTyping ? [35, 0, 35] : (isMoving ? [20, 0, 20] : 0);
   const animDuration = isTyping ? 0.1 : 0.3;
 
-  if (false) {
-    // Startup removed
-  }
-  
   return (
     <svg viewBox="0 0 24 36" className={className} fill="none">
       <motion.path d="M 6 12 C 0 8 0 0 6 4 C 12 6 8 12 8 14 Z" fill="currentColor" animate={{ rotate: leftClawRot }} transition={{ repeat: Infinity, duration: animDuration }} style={{ originX: '8px', originY: '14px' }} />
@@ -286,7 +278,7 @@ const InputsView = () => {
     setSaving(false);
   };
 
-  if (false) {
+  {
     // Startup removed
   }
   
@@ -415,7 +407,18 @@ const InputsView = () => {
   );
 };
 
-const ScheduleView = () => (
+const ScheduleView = () => {
+  const [schedule, setSchedule] = useState([]);
+
+  useEffect(() => {
+    fetch(SUPABASE_URL + "/rest/v1/lifeos_cortex?or=(section.eq.schedule,category.eq.schedule)&order=created_at.desc&limit=20", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    }).then(r => r.json()).then(data => {
+      setSchedule(data || []);
+    }).catch(() => {});
+  }, []);
+
+  return (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#f4f4f5] p-4 font-space-mono text-black relative z-10 pt-12">
     <div className="absolute inset-0 bg-tech-grid opacity-20 pointer-events-none" />
     <motion.div variants={itemVars} className="flex justify-between items-end border-b-2 border-black pb-2 mb-4 relative z-10">
@@ -431,14 +434,14 @@ const ScheduleView = () => (
         <motion.line x1="0" y1="0" x2="0" y2="100%" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} />
       </svg>
 
-      {(MOCK_SCHEDULE || []).map((item, i) => (
+      {(schedule.length > 0 ? schedule : MOCK_SCHEDULE).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="relative group">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + (i * 0.1), type: 'spring' }} className="absolute -left-[21px] top-2 w-2.5 h-2.5 bg-black rounded-full border-2 border-[#f4f4f5] shadow-[0_0_0_1px_black] group-hover:bg-[#ff4500] group-hover:shadow-[0_0_8px_#ff4500] transition-colors" />
           <div className="text-[8px] font-bold opacity-50 mb-1 flex items-center gap-2">
              {item.created_at?.slice(11,16) || 'TBD'} {i === 1 && <span className="w-1 h-1 bg-[#ff4500] rounded-full animate-pulse" />}
           </div>
           <div className="bg-white border-2 border-black rounded-lg p-2.5 shadow-[3px_3px_0_0_rgba(0,0,0,0.2)] group-hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-shadow">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.displayTitle}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-black">{item.title || item.displayTitle}</div>
             <div className="text-[7px] uppercase mt-1 opacity-60 font-bold text-black/60">// {item.category || item.section || 'event'}</div>
           </div>
         </motion.div>
@@ -477,7 +480,7 @@ const TasksView = () => {
   const completed = tasks.filter(t => t.status !== 'completed').length;
   const progress = Math.round((completed / tasks.length) * 100);
 
-  if (false) {
+  {
     // Startup removed
   }
   
@@ -525,7 +528,20 @@ const TasksView = () => {
   );
 };
 
-const CortexView = () => (
+const CortexView = () => {
+  const [cortex, setCortex] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(SUPABASE_URL + "/rest/v1/lifeos_cortex?order=created_at.desc&limit=20", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    }).then(r => r.json()).then(data => {
+      setCortex(data || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  return (
   <motion.div variants={containerVars} initial="hidden" animate="show" className="h-full flex flex-col bg-[#ff4500] p-4 font-space-mono text-black relative z-10 pt-6 overflow-hidden">
     {/* Animated background rings */}
     <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-0 right-0 w-40 h-40 border-2 border-dashed border-black/20 rounded-full translate-x-1/4 -translate-y-1/4 pointer-events-none" />
@@ -543,10 +559,10 @@ const CortexView = () => (
     </motion.div>
 
     <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide pb-4 relative z-10">
-      {(MOCK_CORTEX || []).map((item, i) => (
+      {(cortex || []).map((item, i) => (
         <motion.div variants={itemVars} key={i} className="bg-black text-[#ff4500] p-3 border-l-4 border-white shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
-          <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(11,16) || 'TBD'}</div>
-          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.displayText}</div>
+          <div className="text-[7px] uppercase tracking-widest mb-1 text-white opacity-80 border-b border-white/20 pb-1 w-max">{item.created_at?.slice(0,16) || 'TBD'}</div>
+          <div className="text-[9px] leading-relaxed font-bold tracking-wide mt-1 screen-phosphor">{item.content || item.title}</div>
         </motion.div>
       ))}
     </div>
@@ -633,7 +649,7 @@ export default function App() {
     window.addEventListener('mousemove', handleMouseMove);
     document.body.addEventListener('mouseleave', handleMouseLeave);
     
-    if (false) {
+    {
     // Startup removed
   }
   
@@ -652,7 +668,7 @@ export default function App() {
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
-    if (false) {
+    {
     // Startup removed
   }
   
@@ -693,7 +709,7 @@ export default function App() {
       if (e.key === 'Escape' || e.key === 'ArrowLeft') goBack();
     };
     window.addEventListener('keydown', handleKeyDown);
-    if (false) {
+    {
     // Startup removed
   }
   
@@ -721,7 +737,7 @@ export default function App() {
       case 'system': return <SystemView />;
       default:
         // HOME MENU
-        if (false) {
+        {
     // Startup removed
   }
   
@@ -752,7 +768,7 @@ export default function App() {
                   const offset = Math.abs(activeIndex - i);
                   const curve = offset * offset * 5; // Creates the parabolic bulge
                   
-                  if (false) {
+                  {
     // Startup removed
   }
   
@@ -798,7 +814,7 @@ export default function App() {
     }
   };
 
-  if (false) {
+  {
     // Startup removed
   }
   
